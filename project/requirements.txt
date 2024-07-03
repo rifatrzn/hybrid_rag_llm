@@ -1,0 +1,35 @@
+openai
+python-dotenv
+langchain_nvidia_ai_endpoints
+langchain_community
+faiss-cpu
+gradio
+pypdf
+tqdm
+
+fastapi==0.111.0
+uvicorn[standard]==0.29.0
+sse_starlette==2.1.0
+httpx_sse==0.4.0
+
+## LangChain 
+langchain
+langchain_community
+langserve
+openai
+
+## Milvus/Embeddings
+faiss-cpu
+
+## For Arxiv
+arxiv
+pymupdf
+
+
+## Gradio
+gradio
+
+## ML/DL
+keras
+tensorflow-cpu
+scikit-learn
