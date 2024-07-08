@@ -35,11 +35,15 @@ def hyde_retriever(question):
     hypothetical_document = hyde_query_transformer.invoke({"question": question})
     return retriever.invoke(hypothetical_document)
 
-template = """Answer the question based only on the following context. Ensure your answer is precise, accurate, and directly addresses the question:
+template = """Based on the following context, provide a concise answer to the question. Ensure your response includes relevant details, examples, and explanations to provide clarity and depth. Ensure your answer is precise, accurate, and directly addresses the question: 
+
+Do not reply as according to context or provided context. Start with continuing fashion. 
 
 {context}
 
 Question: {question}
+
+Answer:
 """
 prompt = ChatPromptTemplate.from_template(template)
 answer_chain = prompt | model | StrOutputParser()
