@@ -1,21 +1,45 @@
-# gradio_interface.py
 import gradio as gr
 import requests
 
-def ask_local_server(question):
+
+SYSTEM_NAME = "MIE Healthcare Management System"
+
+def ask_local_server(message, history):
     url = "http://localhost:8000/ask"
-    response = requests.post(url, json={"question": question})
+    response = requests.post(url, json={"question": message})
     if response.status_code == 200:
-        return response.json()["answer"]
+        answer = response.json()["answer"]
+        answer = answer.replace("{{% system-name %}}", SYSTEM_NAME)
+        history.append((message, answer))
+        return history
     else:
-        return "Error: Unable to get the response from the server."
+        error_message = "Error: Unable to get the response from the server."
+        history.append((message, error_message))
+        return history
 
-iface = gr.Interface(
-    fn=ask_local_server,
-    inputs=gr.Textbox(lines=2, placeholder="Enter your question here..."),
-    outputs=gr.Textbox(),
-    title="Document Management System Q&A",
-    description="Ask questions about the functionalities of the Document Management System."
-)
+# Gradio interface
+with gr.Blocks() as demo:
+    gr.Markdown(
+        """
+        # MIE Healthcare Management System Q&A
+        ### Ask questions about the functionalities of the MIE Healthcare Management System.
+        """
+    )
+    
+    chatbot = gr.Chatbot()
+    
+    with gr.Row():
+        question = gr.Textbox(
+            lines=2,
+            placeholder="Enter your question here...",
+            show_label=False,
+            elem_id="question-box"
+        )
+        ask_button = gr.Button("Submit", elem_id="ask-button")
+    
+    def user_ask(user_message, history):
+        return ask_local_server(user_message, history)
 
-iface.launch(share=True)
+    ask_button.click(fn=user_ask, inputs=[question, chatbot], outputs=chatbot)
+
+demo.launch(share=True)
