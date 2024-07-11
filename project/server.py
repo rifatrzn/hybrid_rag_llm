@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -9,6 +10,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import chain
 from dotenv import load_dotenv
+import uvicorn
 
 # Load environment variables
 load_dotenv()
@@ -18,8 +20,10 @@ nvidia_api_key = os.getenv('NVIDIA_API_KEY')
 os.environ['NVIDIA_API_KEY'] = nvidia_api_key
 
 embeddings = NVIDIAEmbeddings()
-vector = FAISS.load_local("faiss_index", embeddings, allow_dangerous_deserialization=True)
+vector = FAISS.load_local("./FAISS_index", embeddings, allow_dangerous_deserialization=True)
 retriever = vector.as_retriever()
+
+
 
 model = ChatNVIDIA(model="meta/llama3-70b-instruct")
 
@@ -86,5 +90,4 @@ async def ask_question(request: QuestionRequest):
     return AnswerResponse(answer="".join(responses))
 
 if __name__ == "__main__":
-    import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
