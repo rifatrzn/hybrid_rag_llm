@@ -27,7 +27,7 @@ jobs:
       with:
         context: .
         push: true
-        tags: rezwr01/project-server:latest
+        tags: rezwr01/project-server
 
     - name: Log in to GitHub Container Registry
       uses: docker/login-action@v2
@@ -54,3 +54,4 @@ jobs:
         docker run -e NVIDIA_API_KEY=${{ secrets.NVIDIA_API_KEY }} \
                    -e GROQ_API_KEY=${{ secrets.GROQ_API_KEY }} \
                    rezwr01/project-server:latest
+
