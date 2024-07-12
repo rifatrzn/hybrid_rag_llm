@@ -87,3 +87,14 @@ jobs:
         context: .
         push: true
         tags: ghcr.io/rifatrzn/langchain_rag_llm:latest
+        
+    - name: Set up environment variables
+      run: |
+        echo "NVIDIA_API_KEY=${{ secrets.NVIDIA_API_KEY }}" >> $GITHUB_ENV
+        echo "GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}" >> $GITHUB_ENV
+        # Add other environment variables similarly
+
+    - name: Run build
+      run: |
+        
+
