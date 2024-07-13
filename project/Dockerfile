@@ -7,7 +7,7 @@
 # Want to help us make this template better? Share your feedback here: https://forms.gle/ybq9Krt8jtBL3iCk7
 
 # Base image with Python and CUDA support
-ARG PYTHON_VERSION=3.11.4
+ARG PYTHON_VERSION=3.11.4 slim
 FROM nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu22.04 as base
 
 
