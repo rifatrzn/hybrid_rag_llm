@@ -6,10 +6,10 @@
 
 # Want to help us make this template better? Share your feedback here: https://forms.gle/ybq9Krt8jtBL3iCk7
 
+# Base image with Python and CUDA support
 ARG PYTHON_VERSION=3.11.4
-FROM python:${PYTHON_VERSION}-slim
-FROM langchain/langchain
 FROM nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu22.04 as base
+
 
 
 # Prevents Python from writing pyc files.
@@ -65,7 +65,7 @@ USER appuser
 
 # Copy the source code into the container.
 COPY . .
-COPY gradio_ui.py .
+
 
 # Expose the port that the application listens on.
 EXPOSE 8000
