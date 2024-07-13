@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build-and-push:
@@ -25,8 +28,9 @@ jobs:
     - name: Build and push Docker image to Docker Hub
       uses: docker/build-push-action@v3
       with:
-        context: .
-        push: docker push rezwr01/project-server:latest
+        context: ./docker_rag_llm
+        file: ./project/Dockerfile
+        push: ${{ github.event_name == 'push' }}
         tags: rezwr01/project-server:latest
 
     - name: Log in to GitHub Container Registry
