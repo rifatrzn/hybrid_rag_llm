@@ -63,8 +63,11 @@ jobs:
         echo "GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}" >> $GITHUB_ENV
 
     - name: Run build and test
+      id: build-and-test
       timeout-minutes: 30  # Set a 30-minute timeout for this step
       run: |
+        start_time=$(date +%s)
+        
         docker build -t rezwr01/project-server ./project
         docker run --name test-container -d \
           -e NVIDIA_API_KEY=${{ secrets.NVIDIA_API_KEY }} \
@@ -82,8 +85,14 @@ jobs:
         # Stop and remove the container
         docker stop test-container
         docker rm test-container
+        
+        end_time=$(date +%s)
+        echo "duration=$((end_time - start_time))" >> $GITHUB_OUTPUT
 
     - name: Print execution time
       if: always()
       run: |
-        echo "Workflow execution time: ${{ job.status }} in ${{ format('{0} minutes {1} seconds', (steps.run-build.endTime - steps.run-build.startTime).minutes, (steps.run-build.endTime - steps.run-build.startTime).seconds) }}"
+        duration=${{ steps.build-and-test.outputs.duration }}
+        minutes=$((duration / 60))
+        seconds=$((duration % 60))
+        echo "Build and test execution time: ${minutes} minutes and ${seconds} seconds"
