@@ -28,9 +28,9 @@ jobs:
     - name: Build and push Docker image to Docker Hub
       uses: docker/build-push-action@v3
       with:
-        context: ./docker_rag_llm
+        context: .
         file: ./project/Dockerfile
-        push: ${{ github.event_name == 'push' }}
+        push: true
         tags: rezwr01/project-server:latest
 
     - name: Log in to GitHub Container Registry
@@ -45,7 +45,7 @@ jobs:
       with:
         context: .
         push: true
-        tags: ghcr.io/rifatrzn/langchain_rag_llm:latest
+        tags: ghcr.io/rifatrzn/rag-server:latest
 
     - name: Set up environment variables
       run: |
@@ -56,4 +56,5 @@ jobs:
       run: |
         docker build -t rezwr01/project-server .
         docker run -e NVIDIA_API_KEY=${{ secrets.NVIDIA_API_KEY }} \
-                                      --name rag rezwr01/project-server:latest
+                   -e GROQ_API_KEY=${{ secrets.GROQ_API_KEY }} \
+                   rezwr01/project-server:latest
