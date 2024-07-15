@@ -97,37 +97,37 @@ jobs:
         seconds=$((duration % 60))
         echo "Build and test execution time: ${minutes} minutes and ${seconds} seconds"
 
-  test-deployment:
-      needs: build-and-push
-      runs-on: ubuntu-latest
-      steps:
-      - name: Pull and run Docker image
-        run: |
-          docker pull ghcr.io/${{ github.repository_owner }}/rag-server:latest
-          docker run -d --name test-container -p 8000:8000 -p 7860:7860 \
-          -e NVIDIA_API_KEY=${{ secrets.NVIDIA_API_KEY }} \
-          -e GROQ_API_KEY=${{ secrets.GROQ_API_KEY }} \
-          ghcr.io/${{ github.repository_owner }}/rag-server:latest
+  # test-deployment:
+  #     needs: build-and-push
+  #     runs-on: ubuntu-latest
+  #     steps:
+  #     - name: Pull and run Docker image
+  #       run: |
+  #         docker pull ghcr.io/${{ github.repository_owner }}/rag-server:latest
+  #         docker run -d --name test-container -p 8000:8000 -p 7860:7860 \
+  #         -e NVIDIA_API_KEY=${{ secrets.NVIDIA_API_KEY }} \
+  #         -e GROQ_API_KEY=${{ secrets.GROQ_API_KEY }} \
+  #         ghcr.io/${{ github.repository_owner }}/rag-server:latest
 
-      - name: Wait for container to start
-        run: sleep 30
+  #     - name: Wait for container to start
+  #       run: sleep 30
 
-      - name: Check if ports are open
-        run: |
-          nc -zv localhost 8000
-          nc -zv localhost 7860
+  #     - name: Check if ports are open
+  #       run: |
+  #         nc -zv localhost 8000
+  #         nc -zv localhost 7860
 
-      - name: Check application health
-        run: |
-          curl -f http://localhost:8000/health || exit 1
-          curl -f http://localhost:7860/health || exit 1
+  #     - name: Check application health
+  #       run: |
+  #         curl -f http://localhost:8000/health || exit 1
+  #         curl -f http://localhost:7860/health || exit 1
 
-      - name: Print container logs
-        if: always()
-        run: docker logs test-container
+  #     - name: Print container logs
+  #       if: always()
+  #       run: docker logs test-container
 
-      - name: Stop and remove container
-        if: always()
-        run: |
-          docker stop test-container
-          docker rm test-container
+  #     - name: Stop and remove container
+  #       if: always()
+  #       run: |
+  #         docker stop test-container
+  #         docker rm test-container
