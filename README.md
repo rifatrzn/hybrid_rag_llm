@@ -87,3 +87,12 @@ Follow these instructions to set up and run the project on your local machine.
     - FastAPI endpoint: `http://localhost:8000`
     - Gradio interface: `http://localhost:7860`
 
+
+## Diagram
+
+```mermaid
+graph TD;
+    A-->B;
+    A-->C;
+    B-->D;
+    C-->D;
