@@ -44,10 +44,9 @@ Follow these instructions to set up and run the project on your local machine.
 
     ```env
     NVIDIA_API_KEY=your_nvidia_api_key
-    GROQ_API_KEY=your_groq_api_key
     ```
 
-    Replace `your_nvidia_api_key` and `your_groq_api_key` with your actual API keys.
+    Replace `your_nvidia_api_key` with your actual API keys.
 
 ### Usage
 
@@ -72,7 +71,6 @@ Follow these instructions to set up and run the project on your local machine.
     ```sh
     docker run -d --name test-container -p 8000:8000 -p 7860:7860 \
       -e NVIDIA_API_KEY=${NVIDIA_API_KEY} \
-      -e GROQ_API_KEY=${GROQ_API_KEY} \
       ghcr.io/rifatrzn/rag-server:latest
     ```
 
