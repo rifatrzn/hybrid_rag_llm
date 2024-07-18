@@ -86,8 +86,6 @@ Follow these instructions to set up and run the project on your local machine.
     - Gradio interface: `http://localhost:7860`
 
 
-## Diagram of How It Works behind the scene
-
 # Project Overview
 
 ## How the LLM Retriever and HYDE Chain Work
@@ -133,16 +131,6 @@ graph TD
         P --> Q[Display answer and sources]
         class O,P,Q box
         class "User Interface" subgraphStyle
-    end
-
-    F -.->|Load| G
-    J --> K
-    N --> P
-
-
-    subgraph "User Interface"
-        O[Gradio interface] --> P[Send query to FastAPI]
-        P --> Q[Display answer and sources]
     end
 
     F -.->|Load| G
