@@ -90,7 +90,7 @@ Follow these instructions to set up and run the project on your local machine.
 
 ```mermaid
 
-graph TD:
+graph TD
     subgraph "Document Processing"
         A[Fetch Markdown from GitHub] -->|Clone repo| B[Process Markdown]
         B --> C[Split into chunks]
