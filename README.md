@@ -86,11 +86,27 @@ Follow these instructions to set up and run the project on your local machine.
     - Gradio interface: `http://localhost:7860`
 
 
-## Diagram
+## Diagram of How It Works behind the scene
 
-```mermaid
-graph TD;
-    A-->B;
-    A-->C;
-    B-->D;
-    C-->D;
+graph TD
+    subgraph "Document Processing"
+        A[Fetch Markdown from GitHub] -->|Clone repo| B[Process Markdown]
+        B -->|Remove headers| C[Split into chunks]
+        C -->|Embed chunks| D[Create FAISS index]
+        D -->|Save| E[Compressed FAISS index]
+    end
+
+    subgraph "Server Setup"
+        F[Load FAISS index] --> G[Initialize NVIDIA Embeddings]
+        G --> H[Set up HYDE chain]
+        H --> I[Configure FastAPI server]
+        I --> J[Start FastAPI server]
+    end
+
+    subgraph "User Interface"
+        K[Gradio interface] -->|User query| L[Send to FastAPI]
+        L -->|Get response| M[Display answer]
+    end
+
+    E -.->|Load| F
+    J -.->|Serve| L
