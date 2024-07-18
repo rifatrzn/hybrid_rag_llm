@@ -88,28 +88,57 @@ Follow these instructions to set up and run the project on your local machine.
 
 ## Diagram of How It Works behind the scene
 
-```mermaid
+# Project Overview
 
+## How the LLM Retriever and HYDE Chain Work
+
+```mermaid
 graph TD
+    classDef box fill:#f9f,stroke:#333,stroke-width:4px;
+    classDef process fill:#0f0,stroke:#333,stroke-width:2px;
+    classDef subgraphStyle fill:#e6e6e6,stroke:#333,stroke-width:2px;
+
     subgraph "Document Processing"
+        direction TB
         A[Fetch Markdown from GitHub] -->|Clone repo| B[Process Markdown]
         B --> C[Split into chunks]
         C --> D[Create embeddings]
         D --> E[Build FAISS index]
         E --> F[Save compressed index]
+        class A,B,C,D,E,F box
+        class "Document Processing" subgraphStyle
     end
 
     subgraph "Server Setup"
+        direction TB
         G[Load FAISS index] --> H[Initialize NVIDIA Embeddings]
         H --> I[Set up HYDE chain]
         I --> J[Configure FastAPI server]
+        class G,H,I,J process
+        class "Server Setup" subgraphStyle
     end
 
     subgraph "Query Processing"
-        K[Receive user query] --> L[Generate hypothetical answer]
-        L --> M[Retrieve relevant documents]
-        M --> N[Generate final answer]
+        direction TB
+        K[Receive user query] --> L[Generate hypothetical answer using HYDE]
+        L --> M[Retrieve relevant documents from FAISS index]
+        M --> N[Generate final answer using LLM]
+        class K,L,M,N process
+        class "Query Processing" subgraphStyle
     end
+
+    subgraph "User Interface"
+        direction TB
+        O[Gradio interface] --> P[Send query to FastAPI]
+        P --> Q[Display answer and sources]
+        class O,P,Q box
+        class "User Interface" subgraphStyle
+    end
+
+    F -.->|Load| G
+    J --> K
+    N --> P
+
 
     subgraph "User Interface"
         O[Gradio interface] --> P[Send query to FastAPI]
