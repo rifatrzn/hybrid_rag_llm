@@ -91,6 +91,7 @@ Follow these instructions to set up and run the project on your local machine.
 ## How the LLM Retriever and HYDE Chain Work
 
 ```mermaid
+
 graph TD
     classDef box fill:#f9f,stroke:#333,stroke-width:4px;
     classDef process fill:#0f0,stroke:#333,stroke-width:2px;
