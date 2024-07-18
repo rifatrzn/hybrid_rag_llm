@@ -91,48 +91,42 @@ Follow these instructions to set up and run the project on your local machine.
 ## How the LLM Retriever and HYDE Chain Work
 
 ```mermaid
-graph TD
-    classDef box fill:#f9f,stroke:#333,stroke-width:4px;
-    classDef process fill:#0f0,stroke:#333,stroke-width:2px;
-    classDef subgraphStyle fill:#e6e6e6,stroke:#333,stroke-width:2px;
+flowchart TD
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:2px;
+    classDef process fill:#d4f1f4,stroke:#05445e,stroke-width:2px;
+    classDef data fill:#f9e1e0,stroke:#db6b6b,stroke-width:2px;
+    classDef ui fill:#e8f1d4,stroke:#5a8f29,stroke-width:2px;
 
-    subgraph "Document Processing"
-        direction TB
-        A[Fetch Markdown from GitHub] -->|Clone repo| B[Process Markdown]
+    subgraph DP[Document Processing]
+        A[Fetch Markdown]:::data --> B[Process Markdown]
         B --> C[Split into chunks]
         C --> D[Create embeddings]
         D --> E[Build FAISS index]
-        E --> F[Save compressed index]
-        class A,B,C,D,E,F box
+        E --> F[Save index]:::data
     end
-    class "Document Processing" subgraphStyle
 
-    subgraph "Server Setup"
-        direction TB
-        G[Load FAISS index] --> H[Initialize NVIDIA Embeddings]
+    subgraph SS[Server Setup]
+        G[Load FAISS index]:::data --> H[Initialize Embeddings]
         H --> I[Set up HYDE chain]
-        I --> J[Configure FastAPI server]
-        class G,H,I,J process
+        I --> J[Configure FastAPI]:::process
     end
-    class "Server Setup" subgraphStyle
 
-    subgraph "Query Processing"
-        direction TB
-        K[Receive user query] --> L[Generate hypothetical answer using HYDE]
-        L --> M[Retrieve relevant documents from FAISS index]
-        M --> N[Generate final answer using LLM]
-        class K,L,M,N process
+    subgraph QP[Query Processing]
+        K[Receive query]:::ui --> L[Generate hypothetical answer]
+        L --> M[Retrieve documents]
+        M --> N[Generate final answer]:::process
     end
-    class "Query Processing" subgraphStyle
 
-    subgraph "User Interface"
-        direction TB
-        O[Gradio interface] --> P[Send query to FastAPI]
-        P --> Q[Display answer and sources]
-        class O,P,Q box
+    subgraph UI[User Interface]
+        O[Gradio interface]:::ui --> P[Send to FastAPI]
+        P --> Q[Display result]:::ui
     end
-    class "User Interface" subgraphStyle
 
-    F -.->|Load| G
+    F -.-o G
     J --> K
     N --> P
+
+    style DP fill:#f0f8ff,stroke:#333,stroke-width:2px
+    style SS fill:#fff0f5,stroke:#333,stroke-width:2px
+    style QP fill:#f5fff0,stroke:#333,stroke-width:2px
+    style UI fill:#fff5e6,stroke:#333,stroke-width:2px
