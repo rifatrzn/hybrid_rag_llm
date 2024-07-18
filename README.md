@@ -88,25 +88,34 @@ Follow these instructions to set up and run the project on your local machine.
 
 ## Diagram of How It Works behind the scene
 
-graph TD
+```mermaid
+
+graph TD:
     subgraph "Document Processing"
         A[Fetch Markdown from GitHub] -->|Clone repo| B[Process Markdown]
-        B -->|Remove headers| C[Split into chunks]
-        C -->|Embed chunks| D[Create FAISS index]
-        D -->|Save| E[Compressed FAISS index]
+        B --> C[Split into chunks]
+        C --> D[Create embeddings]
+        D --> E[Build FAISS index]
+        E --> F[Save compressed index]
     end
 
     subgraph "Server Setup"
-        F[Load FAISS index] --> G[Initialize NVIDIA Embeddings]
-        G --> H[Set up HYDE chain]
-        H --> I[Configure FastAPI server]
-        I --> J[Start FastAPI server]
+        G[Load FAISS index] --> H[Initialize NVIDIA Embeddings]
+        H --> I[Set up HYDE chain]
+        I --> J[Configure FastAPI server]
+    end
+
+    subgraph "Query Processing"
+        K[Receive user query] --> L[Generate hypothetical answer]
+        L --> M[Retrieve relevant documents]
+        M --> N[Generate final answer]
     end
 
     subgraph "User Interface"
-        K[Gradio interface] -->|User query| L[Send to FastAPI]
-        L -->|Get response| M[Display answer]
+        O[Gradio interface] --> P[Send query to FastAPI]
+        P --> Q[Display answer and sources]
     end
 
-    E -.->|Load| F
-    J -.->|Serve| L
+    F -.->|Load| G
+    J --> K
+    N --> P
