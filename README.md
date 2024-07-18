@@ -91,7 +91,6 @@ Follow these instructions to set up and run the project on your local machine.
 ## How the LLM Retriever and HYDE Chain Work
 
 ```mermaid
-
 graph TD
     classDef box fill:#f9f,stroke:#333,stroke-width:4px;
     classDef process fill:#0f0,stroke:#333,stroke-width:2px;
@@ -105,8 +104,8 @@ graph TD
         D --> E[Build FAISS index]
         E --> F[Save compressed index]
         class A,B,C,D,E,F box
-        class "Document Processing" subgraphStyle
     end
+    class "Document Processing" subgraphStyle
 
     subgraph "Server Setup"
         direction TB
@@ -114,8 +113,8 @@ graph TD
         H --> I[Set up HYDE chain]
         I --> J[Configure FastAPI server]
         class G,H,I,J process
-        class "Server Setup" subgraphStyle
     end
+    class "Server Setup" subgraphStyle
 
     subgraph "Query Processing"
         direction TB
@@ -123,20 +122,17 @@ graph TD
         L --> M[Retrieve relevant documents from FAISS index]
         M --> N[Generate final answer using LLM]
         class K,L,M,N process
-        class "Query Processing" subgraphStyle
     end
+    class "Query Processing" subgraphStyle
 
     subgraph "User Interface"
         direction TB
         O[Gradio interface] --> P[Send query to FastAPI]
         P --> Q[Display answer and sources]
         class O,P,Q box
-        class "User Interface" subgraphStyle
     end
+    class "User Interface" subgraphStyle
 
     F -.->|Load| G
     J --> K
     N --> P
-
-
-```
