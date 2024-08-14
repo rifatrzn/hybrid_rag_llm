@@ -63,10 +63,15 @@ jobs:
         echo "NVIDIA_API_KEY=${{ secrets.NVIDIA_API_KEY }}" >> $GITHUB_ENV
         echo "GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}" >> $GITHUB_ENV
 
-    - name: Run build and test
+    - name: Install Docker Compose and Run build and test
       id: build-and-test
       timeout-minutes: 30
       run: |
+        # Install Docker Compose
+        sudo curl -L "https://github.com/docker/compose/releases/download/v2.24.5/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+        sudo chmod +x /usr/local/bin/docker-compose
+        docker-compose --version
+
         start_time=$(date +%s)
         
         docker-compose -f ./project/docker-compose.yaml up -d
@@ -101,37 +106,32 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Install Docker Compose
+    - name: Install Docker Compose and Run deployment test
       run: |
+        # Install Docker Compose
         sudo curl -L "https://github.com/docker/compose/releases/download/v2.24.5/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
         sudo chmod +x /usr/local/bin/docker-compose
         docker-compose --version
 
-    - name: Pull and run Docker images
-      run: |
         echo "NVIDIA_API_KEY=${{ secrets.NVIDIA_API_KEY }}" > .env
         echo "GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}" >> .env
         docker-compose -f ./project/docker-compose.yaml pull
         docker-compose -f ./project/docker-compose.yaml up -d
 
-    - name: Wait for containers to start
-      run: sleep 30
+        # Wait for containers to start
+        sleep 30
 
-    - name: Check if ports are open
-      run: |
+        # Check if ports are open
         nc -zv localhost 8001 || echo "Port 8001 is not open"
         nc -zv localhost 7860 || echo "Port 7860 is not open"
         nc -zv localhost 11434 || echo "Port 11434 is not open"
 
-    - name: Check application health
-      run: |
+        # Check application health
         curl -f http://localhost:8001/health || echo "Health check failed for port 8001"
         curl -f http://localhost:7860/health || echo "Health check failed for port 7860"
 
-    - name: Print container logs
-      if: always()
-      run: docker-compose -f ./project/docker-compose.yaml logs
+        # Print container logs
+        docker-compose -f ./project/docker-compose.yaml logs
 
-    - name: Stop and remove containers
-      if: always()
-      run: docker-compose -f ./project/docker-compose.yaml down
+        # Stop and remove containers
+        docker-compose -f ./project/docker-compose.yaml down
