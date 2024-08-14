@@ -72,10 +72,15 @@ jobs:
         sudo chmod +x /usr/local/bin/docker-compose
         docker-compose --version
 
+        # Create .env file
+        echo "NVIDIA_API_KEY=${{ secrets.NVIDIA_API_KEY }}" > ./project/.env
+        echo "GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}" >> ./project/.env
+
         start_time=$(date +%s)
         
         docker-compose -f ./project/docker-compose.yaml up -d
-        
+
+                
         # Wait for containers to start
         sleep 30
         
@@ -112,9 +117,10 @@ jobs:
         sudo curl -L "https://github.com/docker/compose/releases/download/v2.24.5/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
         sudo chmod +x /usr/local/bin/docker-compose
         docker-compose --version
+        
+        echo "NVIDIA_API_KEY=${{ secrets.NVIDIA_API_KEY }}" > ./project/.env
+        echo "GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}" >> ./project/.env
 
-        echo "NVIDIA_API_KEY=${{ secrets.NVIDIA_API_KEY }}" > .env
-        echo "GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}" >> .env
         docker-compose -f ./project/docker-compose.yaml pull
         docker-compose -f ./project/docker-compose.yaml up -d
 
