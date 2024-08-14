@@ -1,4 +1,4 @@
-name: Build and Push Docker Image
+name: Build and Push Docker Images
 
 on:
   push:
@@ -26,36 +26,36 @@ jobs:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
-    - name: Build and push Docker image to Docker Hub
-      uses: docker/build-push-action@v3
-      with:
-        context: ./project
-        file: ./project/Dockerfile
-        push: true
-        tags: rezwr01/project-server:latest
-        build-args: |
-          PYTHON_VERSION=3.11.4
-        cache-from: type=registry,ref=rezwr01/project-server:buildcache
-        cache-to: type=registry,ref=rezwr01/project-server:buildcache,mode=max
-
     - name: Log in to GitHub Container Registry
       uses: docker/login-action@v3
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
         password: ${{ secrets.GHCR_PAT }}
-    
-    - name: Build and push Docker image to GHCR
+
+    - name: Build and push app image
       uses: docker/build-push-action@v4
       with:
-        context: ./project
-        file: ./project/Dockerfile
+        context: .
+        file: ./Dockerfile
         push: true
-        tags: ghcr.io/${{ github.repository_owner }}/rag-server:latest
-        build-args: |
-          PYTHON_VERSION=3.11.4
-        cache-from: type=registry,ref=ghcr.io/${{ github.repository_owner }}/rag-server:buildcache
-        cache-to: type=registry,ref=ghcr.io/${{ github.repository_owner }}/rag-server:buildcache,mode=max
+        tags: |
+          ${{ secrets.DOCKERHUB_USERNAME }}/app:latest
+          ghcr.io/${{ github.repository_owner }}/app:latest
+        cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/app:buildcache
+        cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/app:buildcache,mode=max
+
+    - name: Build and push gradio image
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        file: ./Dockerfile.gradio
+        push: true
+        tags: |
+          ${{ secrets.DOCKERHUB_USERNAME }}/gradio:latest
+          ghcr.io/${{ github.repository_owner }}/gradio:latest
+        cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/gradio:buildcache
+        cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/gradio:buildcache,mode=max
 
     - name: Set up environment variables
       run: |
@@ -64,27 +64,23 @@ jobs:
 
     - name: Run build and test
       id: build-and-test
-      timeout-minutes: 30  # Set a 30-minute timeout for this step
+      timeout-minutes: 30
       run: |
         start_time=$(date +%s)
         
-        docker build -t rezwr01/project-server ./project
-        docker run --name test-container -d \
-          -e NVIDIA_API_KEY=${{ secrets.NVIDIA_API_KEY }} \
-          -e GROQ_API_KEY=${{ secrets.GROQ_API_KEY }} \
-          rezwr01/project-server:latest
+        docker-compose up -d
         
-        # Wait for container to start (adjust sleep time as needed)
+        # Wait for containers to start
         sleep 30
         
         # Run your test commands here
-        docker exec test-container python -c "print('Container is running')"
+        docker-compose exec -T app python -c "print('App container is running')"
+        docker-compose exec -T gradio python -c "print('Gradio container is running')"
         
         # Add more test commands as needed
         
-        # Stop and remove the container
-        docker stop test-container
-        docker rm test-container
+        # Stop and remove the containers
+        docker-compose down
         
         end_time=$(date +%s)
         echo "duration=$((end_time - start_time))" >> $GITHUB_OUTPUT
@@ -97,37 +93,43 @@ jobs:
         seconds=$((duration % 60))
         echo "Build and test execution time: ${minutes} minutes and ${seconds} seconds"
 
-  # test-deployment:
-  #     needs: build-and-push
-  #     runs-on: ubuntu-latest
-  #     steps:
-  #     - name: Pull and run Docker image
-  #       run: |
-  #         docker pull ghcr.io/${{ github.repository_owner }}/rag-server:latest
-  #         docker run -d --name test-container -p 8000:8000 -p 7860:7860 \
-  #         -e NVIDIA_API_KEY=${{ secrets.NVIDIA_API_KEY }} \
-  #         -e GROQ_API_KEY=${{ secrets.GROQ_API_KEY }} \
-  #         ghcr.io/${{ github.repository_owner }}/rag-server:latest
+  test-deployment:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
 
-  #     - name: Wait for container to start
-  #       run: sleep 30
+    - name: Set up Docker Compose
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y docker-compose
 
-  #     - name: Check if ports are open
-  #       run: |
-  #         nc -zv localhost 8000
-  #         nc -zv localhost 7860
+    - name: Pull and run Docker images
+      run: |
+        echo "NVIDIA_API_KEY=${{ secrets.NVIDIA_API_KEY }}" > .env
+        echo "GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}" >> .env
+        docker-compose pull
+        docker-compose up -d
 
-  #     - name: Check application health
-  #       run: |
-  #         curl -f http://localhost:8000/health || exit 1
-  #         curl -f http://localhost:7860/health || exit 1
+    - name: Wait for containers to start
+      run: sleep 30
 
-  #     - name: Print container logs
-  #       if: always()
-  #       run: docker logs test-container
+    - name: Check if ports are open
+      run: |
+        nc -zv localhost 8001
+        nc -zv localhost 7860
+        nc -zv localhost 11434
 
-  #     - name: Stop and remove container
-  #       if: always()
-  #       run: |
-  #         docker stop test-container
-  #         docker rm test-container
+    - name: Check application health
+      run: |
+        curl -f http://localhost:8001/health || exit 1
+        curl -f http://localhost:7860/health || exit 1
+
+    - name: Print container logs
+      if: always()
+      run: docker-compose logs
+
+    - name: Stop and remove containers
+      if: always()
+      run: docker-compose down

@@ -1,0 +1,36 @@
+graph TD
+    A[User] -->|Interacts with| B[Gradio Frontend]
+    B -->|Sends request| C[FastAPI Backend]
+    C -->|Retrieves context| D[FAISS Vector Store]
+    C -->|Generates response| E[LLM Model]
+    E -->|Uses| F[Ollama / NVIDIA API]
+    C -->|Returns response| B
+    B -->|Displays response| A
+    
+    G[Admin] -->|Updates| H[Vector Database]
+    H -->|Refreshes| D
+
+    subgraph "Frontend (Gradio)"
+        B
+    end
+
+    subgraph "Backend (FastAPI)"
+        C
+        D
+        E
+    end
+
+    subgraph "External Services"
+        F
+        H
+    end
+
+    classDef frontend fill:#e1f5fe,stroke:#01579b
+    classDef backend fill:#e8f5e9,stroke:#1b5e20
+    classDef external fill:#fff3e0,stroke:#e65100
+    classDef user fill:#f3e5f5,stroke:#4a148c
+
+    class A,G user
+    class B frontend
+    class C,D,E backend
+    class F,H external

@@ -1,78 +1,42 @@
-# syntax=docker/dockerfile:1
-
-# Comments are provided throughout this file to help you get started.
-# If you need more help, visit the Dockerfile reference guide at
-# https://docs.docker.com/go/dockerfile-reference/
-
-# Want to help us make this template better? Share your feedback here: https://forms.gle/ybq9Krt8jtBL3iCk7
-
-# Base image with Python and CUDA support
-ARG PYTHON_VERSION=3.11.4 slim
+# Start with the NVIDIA CUDA base image that has the necessary drivers
 FROM nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu22.04 as base
 
-
-
-# Prevents Python from writing pyc files.
-ENV PYTHONDONTWRITEBYTECODE=1
-
-# Keeps Python from buffering stdout and stderr to avoid situations where
-# the application crashes without emitting any logs due to buffering.
-ENV PYTHONUNBUFFERED=1
-
+# Set the working directory
 WORKDIR /app
 
-
-# Install system dependencies.
-# Install Python and other system dependencies.
+# Install Python and necessary dependencies
 RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
-    build-essential \
+    git \
     curl \
-    software-properties-common \
     && rm -rf /var/lib/apt/lists/*
 
-# Set Python 3 as the default Python version
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
+# Ensure pip is up-to-date
+RUN python3 -m pip install --upgrade pip
 
-
-# Create a non-privileged user that the app will run under.
-# See https://docs.docker.com/go/dockerfile-user-best-practices/
-ARG UID=10001
-RUN adduser \
-    --disabled-password \
-    --gecos "" \
-    --home "/nonexistent" \
-    --shell "/sbin/nologin" \
-    --no-create-home \
-    --uid "${UID}" \
-    appuser
-
-
-# Copy the requirements file
+# Copy requirements file and install Python dependencies
 COPY requirements.txt .
 
-    # Download dependencies as a separate step to take advantage of Docker's caching.
-# Leverage a cache mount to /root/.cache/pip to speed up subsequent builds.
-# Leverage a bind mount to requirements.txt to avoid having to copy them into
-# into this layer.
-RUN --mount=type=cache,target=/root/.cache/pip \
-    --mount=type=bind,source=requirements.txt,target=requirements.txt \
-    python -m pip install --upgrade -r requirements.txt
+ENV PIP_DEFAULT_TIMEOUT=100
 
-# Switch to the non-privileged user to run the application.
-USER appuser
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the source code into the container.
-COPY . .
+# Copy application files
+COPY app_server.py vector_embed.py ./
 
+# Copy pre-built embeddings into the container
+COPY nomic_embed /app/nomic_embed
 
-# Expose the port that the application listens on.
-EXPOSE 8000
-EXPOSE 7860
+# Create necessary directories
+RUN mkdir -p /app/docs
 
-# Define the health check.
-HEALTHCHECK CMD curl --fail http://localhost:8000/ || exit 1
+# Expose port for the app
+EXPOSE 8001
 
-# Run the FastAPI and Gradio applications.
-CMD ["python", "server.py"]
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+
+# Default command
+CMD ["python3", "app_server.py"]
