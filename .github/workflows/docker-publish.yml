@@ -19,12 +19,16 @@ jobs:
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
+      with:
+        version: latest
 
     - name: Aggressive disk space cleanup
       run: |
         sudo swapoff -a
         sudo rm -f /swapfile
-        sudo apt clean
+        sudo apt-get clean
+        sudo apt-get autoclean
+        sudo apt-get autoremove -y
         docker stop $(docker ps -aq) || true
         docker rm -f $(docker ps -aq) || true
         docker rmi -f $(docker images -q) || true
@@ -35,6 +39,8 @@ jobs:
         sudo rm -rf /usr/local/share/powershell /usr/share/swift /usr/local/.ghcup
         sudo rm -rf /home/linuxbrew
         sudo rm -rf /usr/local/lib/node_modules
+        sudo rm -rf /var/log/journal
+        sudo rm -rf /var/tmp/*
         df -h
 
     - name: Log in to Docker Hub
@@ -50,11 +56,10 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GHCR_PAT }}
 
-    - name: Pull BuildKit image
+    - name: Pull and tag BuildKit image
       run: |
-        docker pull moby/buildkit:latest
+        for i in {1..3}; do docker pull moby/buildkit:latest && break || sleep 10; done
         docker tag moby/buildkit:latest moby/buildkit:buildx-stable-1
-
 
     - name: Build and push app image
       uses: docker/build-push-action@v5
@@ -98,12 +103,16 @@ jobs:
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
+      with:
+        version: latest
 
     - name: Aggressive disk space cleanup
       run: |
         sudo swapoff -a
         sudo rm -f /swapfile
-        sudo apt clean
+        sudo apt-get clean
+        sudo apt-get autoclean
+        sudo apt-get autoremove -y
         docker stop $(docker ps -aq) || true
         docker rm -f $(docker ps -aq) || true
         docker rmi -f $(docker images -q) || true
@@ -114,6 +123,8 @@ jobs:
         sudo rm -rf /usr/local/share/powershell /usr/share/swift /usr/local/.ghcup
         sudo rm -rf /home/linuxbrew
         sudo rm -rf /usr/local/lib/node_modules
+        sudo rm -rf /var/log/journal
+        sudo rm -rf /var/tmp/*
         df -h
 
     - name: Log in to Docker Hub
@@ -173,7 +184,9 @@ jobs:
       run: |
         sudo swapoff -a
         sudo rm -f /swapfile
-        sudo apt clean
+        sudo apt-get clean
+        sudo apt-get autoclean
+        sudo apt-get autoremove -y
         docker stop $(docker ps -aq) || true
         docker rm -f $(docker ps -aq) || true
         docker rmi -f $(docker images -q) || true
@@ -184,6 +197,8 @@ jobs:
         sudo rm -rf /usr/local/share/powershell /usr/share/swift /usr/local/.ghcup
         sudo rm -rf /home/linuxbrew
         sudo rm -rf /usr/local/lib/node_modules
+        sudo rm -rf /var/log/journal
+        sudo rm -rf /var/tmp/*
         df -h
 
     - name: Set up environment variables
