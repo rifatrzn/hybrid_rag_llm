@@ -50,6 +50,12 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GHCR_PAT }}
 
+    - name: Pull BuildKit image
+      run: |
+        docker pull moby/buildkit:latest
+        docker tag moby/buildkit:latest moby/buildkit:buildx-stable-1
+
+
     - name: Build and push app image
       uses: docker/build-push-action@v5
       id: docker_build_app
