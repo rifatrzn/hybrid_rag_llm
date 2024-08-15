@@ -11,7 +11,7 @@ on:
 
 jobs:
   build-and-push-app:
-    runs-on: ubuntu-latest-xl
+    runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
     - name: Checkout repository
@@ -52,6 +52,7 @@ jobs:
 
     - name: Build and push app image
       uses: docker/build-push-action@v5
+      id: docker_build_app
       with:
         context: ./project
         file: ./project/Dockerfile
@@ -68,8 +69,6 @@ jobs:
         build-args: |
           BUILDKIT_INLINE_CACHE=1
         outputs: type=docker,dest=/tmp/app-image.tar
-      retries: 3
-      retry_wait_seconds: 30
 
     - name: Load app image
       run: |
@@ -85,7 +84,7 @@ jobs:
         df -h
 
   build-and-push-gradio:
-    runs-on: ubuntu-latest-xl
+    runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
     - name: Checkout repository
@@ -126,6 +125,7 @@ jobs:
 
     - name: Build and push gradio image
       uses: docker/build-push-action@v5
+      id: docker_build_gradio
       with:
         context: ./project
         file: ./project/Dockerfile.gradio
@@ -142,8 +142,6 @@ jobs:
         build-args: |
           BUILDKIT_INLINE_CACHE=1
         outputs: type=docker,dest=/tmp/gradio-image.tar
-      retries: 3
-      retry_wait_seconds: 30
 
     - name: Load gradio image
       run: |
@@ -160,7 +158,7 @@ jobs:
 
   test-deployment:
     needs: [build-and-push-app, build-and-push-gradio]
-    runs-on: ubuntu-latest-xl
+    runs-on: ubuntu-latest
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
