@@ -11,7 +11,7 @@ on:
 
 jobs:
   build-and-push-app:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-xl
     timeout-minutes: 60
     steps:
     - name: Checkout repository
@@ -25,12 +25,16 @@ jobs:
         sudo swapoff -a
         sudo rm -f /swapfile
         sudo apt clean
-        docker system prune -af
+        docker stop $(docker ps -aq) || true
+        docker rm -f $(docker ps -aq) || true
+        docker rmi -f $(docker images -q) || true
+        docker system prune -af --volumes
+        docker network prune -f
+        sudo rm -rf /var/lib/docker/overlay2
         sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/share/boost
         sudo rm -rf /usr/local/share/powershell /usr/share/swift /usr/local/.ghcup
         sudo rm -rf /home/linuxbrew
         sudo rm -rf /usr/local/lib/node_modules
-        sudo rm -rf /var/lib/docker/overlay2
         df -h
 
     - name: Log in to Docker Hub
@@ -63,6 +67,14 @@ jobs:
           type=registry,ref=ghcr.io/${{ github.repository_owner }}/app:buildcache,mode=max
         build-args: |
           BUILDKIT_INLINE_CACHE=1
+        outputs: type=docker,dest=/tmp/app-image.tar
+      retries: 3
+      retry_wait_seconds: 30
+
+    - name: Load app image
+      run: |
+        docker load --input /tmp/app-image.tar
+        docker image ls -a
 
     - name: Clean up after build
       if: always()
@@ -73,7 +85,7 @@ jobs:
         df -h
 
   build-and-push-gradio:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-xl
     timeout-minutes: 60
     steps:
     - name: Checkout repository
@@ -87,12 +99,16 @@ jobs:
         sudo swapoff -a
         sudo rm -f /swapfile
         sudo apt clean
-        docker system prune -af
+        docker stop $(docker ps -aq) || true
+        docker rm -f $(docker ps -aq) || true
+        docker rmi -f $(docker images -q) || true
+        docker system prune -af --volumes
+        docker network prune -f
+        sudo rm -rf /var/lib/docker/overlay2
         sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/share/boost
         sudo rm -rf /usr/local/share/powershell /usr/share/swift /usr/local/.ghcup
         sudo rm -rf /home/linuxbrew
         sudo rm -rf /usr/local/lib/node_modules
-        sudo rm -rf /var/lib/docker/overlay2
         df -h
 
     - name: Log in to Docker Hub
@@ -125,6 +141,14 @@ jobs:
           type=registry,ref=ghcr.io/${{ github.repository_owner }}/gradio:buildcache,mode=max
         build-args: |
           BUILDKIT_INLINE_CACHE=1
+        outputs: type=docker,dest=/tmp/gradio-image.tar
+      retries: 3
+      retry_wait_seconds: 30
+
+    - name: Load gradio image
+      run: |
+        docker load --input /tmp/gradio-image.tar
+        docker image ls -a
 
     - name: Clean up after build
       if: always()
@@ -136,7 +160,7 @@ jobs:
 
   test-deployment:
     needs: [build-and-push-app, build-and-push-gradio]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-xl
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -146,12 +170,16 @@ jobs:
         sudo swapoff -a
         sudo rm -f /swapfile
         sudo apt clean
-        docker system prune -af
+        docker stop $(docker ps -aq) || true
+        docker rm -f $(docker ps -aq) || true
+        docker rmi -f $(docker images -q) || true
+        docker system prune -af --volumes
+        docker network prune -f
+        sudo rm -rf /var/lib/docker/overlay2
         sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/share/boost
         sudo rm -rf /usr/local/share/powershell /usr/share/swift /usr/local/.ghcup
         sudo rm -rf /home/linuxbrew
         sudo rm -rf /usr/local/lib/node_modules
-        sudo rm -rf /var/lib/docker/overlay2
         df -h
 
     - name: Set up environment variables
@@ -190,3 +218,8 @@ jobs:
         docker volume prune -f
         docker network prune -f
         df -h
+
+    - name: Check disk space
+      run: |
+        df -h
+        du -sh /*
