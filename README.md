@@ -174,7 +174,7 @@ This architecture ensures efficient processing of user queries, real-time update
 
 1. Clone the repository:
    ```
-   git clone https://github.com/your-username/mie-healthcare-enterprise.git
+   git clone https://github.com/rifatrzn/langchain_rag_llm.git
    cd mie-healthcare-enterprise
    ```
 
