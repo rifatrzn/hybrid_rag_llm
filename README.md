@@ -1,4 +1,4 @@
-# MIE Healthcare Enterprise
+## Langchain_Rag_LLM Documentation
 
 🏥 A powerful and intuitive healthcare information system powered by advanced language models and vector databases.
 
