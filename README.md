@@ -38,6 +38,56 @@ The MIE Healthcare Enterprise system consists of several interconnected componen
 4. **Vector Embedding Script (`vector_embed.py`)**: Processes documents and creates vector embeddings for efficient search and retrieval.
 5. **Docker Compose Configuration (`docker-compose.yaml`)**: Defines the multi-container Docker application for easy deployment and scaling.
 
+## RAG System Diagram
+
+```mermaid
+graph TD
+    A[User Input] -->|Question| B(Gradio UI)
+    B -->|API Request| C{FastAPI Server}
+    C -->|Get LLM| D[LLM Selection]
+    D -->|Ollama| E[Ollama LLM]
+    D -->|NVIDIA| F[NVIDIA LLM]
+    C -->|HYDE| G[Hypothetical Document Generation]
+    G -->|Query| H[FAISS Vector Store]
+    H -->|Retrieved Documents| I[Document Formatting]
+    I -->|Formatted Context| J[QA Chain]
+    E --> J
+    F --> J
+    J -->|Generated Answer| K[Response Formatting]
+    K -->|API Response| B
+    B -->|Display Answer| L[User Interface]
+
+    subgraph "RAG Components"
+        G
+        H
+        I
+        J
+    end
+
+    subgraph "LLM Providers"
+        E
+        F
+    end
+
+    M[Update Vector DB] -->|Trigger| N[Update Script]
+    N -->|New Documents| H
+
+    style A fill:#f9d71c,stroke:#333,stroke-width:2px
+    style B fill:#f9813a,stroke:#333,stroke-width:2px
+    style C fill:#1cadf9,stroke:#333,stroke-width:2px
+    style D fill:#45b7b8,stroke:#333,stroke-width:2px
+    style E fill:#6a0dad,stroke:#333,stroke-width:2px
+    style F fill:#6a0dad,stroke:#333,stroke-width:2px
+    style G fill:#f94144,stroke:#333,stroke-width:2px
+    style H fill:#f3722c,stroke:#333,stroke-width:2px
+    style I fill:#f8961e,stroke:#333,stroke-width:2px
+    style J fill:#90be6d,stroke:#333,stroke-width:2px
+    style K fill:#43aa8b,stroke:#333,stroke-width:2px
+    style L fill:#f9c74f,stroke:#333,stroke-width:2px
+    style M fill:#277da1,stroke:#333,stroke-width:2px
+    style N fill:#4d908e,stroke:#333,stroke-width:2px
+```
+
 ## System Diagram
 
 Below is a detailed diagram illustrating the architecture and data flow of the MIE Healthcare Enterprise system:

@@ -6,7 +6,6 @@ set -e
 REPO_URL="https://github.com/mieweb/docs.git"
 DOCS_DIR="./docs"
 
-
 # Clone or update the repository
 if [ -d "$DOCS_DIR" ]; then
     echo "Updating existing repository..."
@@ -22,6 +21,6 @@ cd ..
 
 # Run the vector embedding script from the project directory
 echo "Processing markdown files and building/refreshing vector database..."
-python3 ./vector_embed.py  # Ensure you're pointing to the correct location
+python3 ./vector_embed.py
 
 echo "Vector database update completed successfully."

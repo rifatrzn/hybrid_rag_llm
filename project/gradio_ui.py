@@ -12,12 +12,14 @@ def api_request(endpoint, payload):
     except requests.RequestException as e:
         return {"error": f"Error communicating with the server: {str(e)}"}
 
-def update_vector_db():
-    result = api_request("update_vector_db", {})
-    if result and "error" not in result:
-        return "✅ Vector Database Updated Successfully"
-    else:
-        return f"❌ Failed to update Vector Database: {result.get('error', 'Unknown error')}"
+def update_vector_database():
+    try:
+        response = requests.post(f"{SERVER_URL}/update_vector_db")
+        response.raise_for_status()
+        result = response.json()
+        return f"Success: {result['message']}\nDetails: {result['details']}"
+    except requests.RequestException as e:
+        return f"Failed to update vector database: {str(e)}"
 
 def chat_with_model(message, history, provider, model, max_tokens):
     messages = [{"role": "user" if i % 2 == 0 else "assistant", "content": msg} for i, (msg, _) in enumerate(history)]
@@ -79,6 +81,11 @@ with gr.Blocks(css=css) as demo:
             max_tokens = gr.Slider(minimum=1, maximum=500, value=100, step=1, label="Max Tokens 🔢", info="Adjust the length of the generated response")
             update_btn = gr.Button("Update Vector Database 🔄")
             update_output = gr.Textbox(label="Update Result 📊", lines=2)
+               
+            update_btn.click(
+                fn=update_vector_database,  # Change this line
+                outputs=update_output
+            )
 
     def update_model_options(provider):
         if "ollama" in provider:
@@ -95,7 +102,7 @@ with gr.Blocks(css=css) as demo:
 
     send_btn.click(respond, inputs=[msg, chatbot, provider, model, max_tokens], outputs=[msg, chatbot])
     msg.submit(respond, inputs=[msg, chatbot, provider, model, max_tokens], outputs=[msg, chatbot])
-    update_btn.click(update_vector_db, outputs=[update_output])
+    update_btn.click(update_vector_database, outputs=[update_output])
 
 if __name__ == "__main__":
     demo.launch(server_name="0.0.0.0", server_port=7860)

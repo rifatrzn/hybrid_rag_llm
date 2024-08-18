@@ -33,7 +33,7 @@ load_dotenv()
 app = FastAPI()
 
 # Set up CORS
-origins = ["http://localhost", "http://localhost:8000", "http://localhost:3000"]
+origins = ["http://localhost", "http://localhost:8000", "http://localhost:3000","http://localhost:7860"]
 app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
 # Initialize embeddings and load FAISS index
@@ -268,7 +268,7 @@ async def update_vector_db():
         # Call the update script
         logger.info("Starting vector database update...")
         result = subprocess.run(
-            ["./update_vector_db.sh"], 
+            ["/app/update_vector_db.sh"], 
             capture_output=True, 
             text=True, 
             check=True
