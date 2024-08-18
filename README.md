@@ -39,6 +39,7 @@ The MIE Healthcare Enterprise system consists of several interconnected componen
 5. **Docker Compose Configuration (`docker-compose.yaml`)**: Defines the multi-container Docker application for easy deployment and scaling.
 
 ## RAG System Diagram
+![Chatbot Workflow](./project/Embedding.jpg)
 ![Chatbot Workflow](./project/Mind_llm.jpg)
 
 ```mermaid
@@ -88,7 +89,7 @@ graph TD
     style M fill:#277da1,stroke:#333,stroke-width:2px
     style N fill:#4d908e,stroke:#333,stroke-width:2px
 ```
-![alt text](image.png)
+
 
 ## System Diagram
 
