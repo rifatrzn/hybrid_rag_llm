@@ -87,6 +87,7 @@ graph TD
     style M fill:#277da1,stroke:#333,stroke-width:2px
     style N fill:#4d908e,stroke:#333,stroke-width:2px
 ```
+![alt text](image.png)
 
 ## System Diagram
 
