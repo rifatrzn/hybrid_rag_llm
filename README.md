@@ -95,85 +95,75 @@ graph TD
 Below is a detailed diagram illustrating the architecture and data flow of the MIE Healthcare Enterprise system:
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#6366f1', 'primaryTextColor': '#fff', 'primaryBorderColor': '#4f46e5', 'lineColor': '#64748b', 'secondaryColor': '#f1f5f9', 'tertiaryColor': '#e2e8f0'}}}%%
-flowchart TD
-    classDef default fill:#f1f5f9,stroke:#6366f1,stroke-width:2px,color:#334155;
-    classDef api fill:#818cf8,stroke:#4f46e5,stroke-width:2px,color:#fff;
-    classDef llm fill:#22c55e,stroke:#16a34a,stroke-width:2px,color:#fff;
-    classDef db fill:#f59e0b,stroke:#d97706,stroke-width:2px,color:#fff;
-    classDef ui fill:#e879f9,stroke:#d946ef,stroke-width:2px,color:#fff;
-    classDef note fill:#fef3c7,stroke:#f59e0b,stroke-width:2px,color:#92400e;
-    classDef update fill:#fca5a5,stroke:#ef4444,stroke-width:2px,color:#fff;
+graph TD
+    A[1. User enters query] --> B[2. Gradio UI receives query]
+    B --> C[3. API request sent to FastAPI server]
+    C --> D[4. FastAPI server processes request]
+    D --> E[5. LLM selection based on user preference]
+    E --> |Ollama| F1[6a. Ollama LLM selected]
+    E --> |NVIDIA| F2[6b. NVIDIA LLM selected]
+    D --> G[7. HYDE process initiated]
+    G --> H[8. Query sent to selected LLM]
+    H --> I[9. LLM generates hypothetical answer]
+    I --> J[10. Hypothetical answer embedded]
+    J --> K[11. Embedded vector used to query FAISS]
+    K --> L[12. FAISS returns most similar documents]
+    L --> M[13. Retrieved documents are formatted]
+    M --> N[14. Formatted documents combined with original query]
+    N --> O[15. Combined input sent to QA Chain]
+    O --> P[16. QA Chain processes input using selected LLM]
+    P --> Q[17. LLM generates final answer]
+    Q --> R[18. Answer formatted with citations]
+    R --> S[19. Formatted answer sent back to Gradio UI]
+    S --> T[20. Answer displayed to user]
 
-    A["👤 User"]
-    B["🖥️ Gradio UI\n(Port 7860)"]:::ui
-    C["🚀 FastAPI Backend\n(Port 8001)"]:::api
-
-    subgraph Frontend ["Gradio Frontend"]
-        D["💬 Chat Interface\nUser inputs messages"]:::ui
-        E["⚙️ Settings Panel\nSelect provider & model"]:::ui
-        F["🔄 Update DB Button\nTrigger vector DB update"]:::ui
+    subgraph "Embedding Process"
+        J
+        K
     end
 
-    subgraph Backend ["FastAPI Backend"]
-        G["📊 /embeddings\nGenerate text embeddings"]:::api
-        H["💬 /generate\nProcess chat & generate responses"]:::api
-        I["🔄 /update_vector_db\nUpdate vector database"]:::api
-        J["🏠 /\nRoot endpoint"]:::api
-        K["❤️ /health\nHealth check endpoint"]:::api
+    subgraph "Document Retrieval"
+        L
+        M
     end
 
-    subgraph LLM ["LLM Processing"]
-        L["🔍 HYDE Query\nGenerate hypothetical document"]:::llm
-        M["🗃️ Retrieval\nFetch relevant docs from FAISS"]:::db
-        N["❓ QA Chain\nGenerate final answer"]:::llm
-        O{"🔀 LLM Selection\nChoose LLM based on settings"}:::llm
-        P["🧠 NVIDIA LLM\nmeta/llama-3.1-70b-instruct"]:::llm
-        Q["🦙 Ollama LLM\nllama3.1 or llama3"]:::llm
+    subgraph "Answer Generation"
+        O
+        P
+        Q
     end
 
-    R["📚 FAISS Index\nStore document embeddings"]:::db
-    S["🔤 Ollama Embeddings\nGenerate embeddings"]:::llm
+    U[Update Vector DB] -.-> V[Run update script]
+    V -.-> W[New documents processed]
+    W -.-> X[Documents embedded]
+    X -.-> Y[Embeddings added to FAISS]
 
-    subgraph UpdateProcess ["Update Process"]
-        T["🔄 update_vector_db.sh\nBash script"]:::update
-        U["📥 Git Clone/Pull\nFetch latest docs"]:::update
-        V["🔨 vector_embed.py\nProcess markdown & update DB"]:::update
-    end
-
-    A -->|"1. Interact with UI"| B
-    B -->|"2. Send API requests"| C
-    C -->|"8. Send response"| B
-    B -->|"9. Display response"| A
-
-    D -->|"3. Send message"| H
-    E -->|"3. Set LLM preferences"| H
-    F -->|"3. Trigger update"| I
-
-    H -->|"4. Process request"| LLM
-    I -->|"Trigger update"| T
-    G -->|"Generate"| S
-
-    L -->|"5. Create HYDE query"| M
-    M -->|"6. Fetch relevant docs"| N
-    N -->|"7. Generate answer"| O
-    O -->|"If NVIDIA selected"| P
-    O -->|"If Ollama selected"| Q
-    S -->|"Store embeddings"| R
-    M -->|"Retrieve docs"| R
-
-    T -->|"Run"| U
-    U -->|"Update docs"| V
-    V -->|"Refresh"| R
-
-    note1["📝 Note: The user interacts with the Gradio UI,\nwhich sends requests to the FastAPI backend.\nThe backend processes these requests using\nthe selected LLM and returns the responses."]:::note
-    note2["📝 Note: The update process can be triggered\nmanually or automatically. It fetches the latest\ndocumentation, processes it, and updates the\nFAISS index to keep the knowledge base current."]:::note
-
-    style Frontend fill:#f0e6fa,stroke:#d8b4fe,stroke-width:4px
-    style Backend fill:#e0f2fe,stroke:#7dd3fc,stroke-width:4px
-    style LLM fill:#bbf7d0,stroke:#22c55e,stroke-width:4px
-    style UpdateProcess fill:#fee2e2,stroke:#fca5a5,stroke-width:4px
-    linkStyle default stroke:#64748b,stroke-width:2px;
+    style A fill:#f9d71c,stroke:#333,stroke-width:2px
+    style B fill:#f9813a,stroke:#333,stroke-width:2px
+    style C fill:#1cadf9,stroke:#333,stroke-width:2px
+    style D fill:#45b7b8,stroke:#333,stroke-width:2px
+    style E fill:#ff6b6b,stroke:#333,stroke-width:2px
+    style F1 fill:#6a0dad,stroke:#333,stroke-width:2px
+    style F2 fill:#6a0dad,stroke:#333,stroke-width:2px
+    style G fill:#f94144,stroke:#333,stroke-width:2px
+    style H fill:#f8961e,stroke:#333,stroke-width:2px
+    style I fill:#90be6d,stroke:#333,stroke-width:2px
+    style J fill:#43aa8b,stroke:#333,stroke-width:2px
+    style K fill:#f3722c,stroke:#333,stroke-width:2px
+    style L fill:#277da1,stroke:#333,stroke-width:2px
+    style M fill:#4d908e,stroke:#333,stroke-width:2px
+    style N fill:#577590,stroke:#333,stroke-width:2px
+    style O fill:#277da1,stroke:#333,stroke-width:2px
+    style P fill:#f9c74f,stroke:#333,stroke-width:2px
+    style Q fill:#90be6d,stroke:#333,stroke-width:2px
+    style R fill:#43aa8b,stroke:#333,stroke-width:2px
+    style S fill:#f9813a,stroke:#333,stroke-width:2px
+    style T fill:#f9d71c,stroke:#333,stroke-width:2px
+    style U fill:#277da1,stroke:#333,stroke-width:2px
+    style V fill:#4d908e,stroke:#333,stroke-width:2px
+    style W fill:#577590,stroke:#333,stroke-width:2px
+    style X fill:#43aa8b,stroke:#333,stroke-width:2px
+    style Y fill:#f3722c,stroke:#333,stroke-width:2px
 ```
 
 ### Diagram Explanation
