@@ -66,8 +66,12 @@ css = """
 """
 
 with gr.Blocks(css=css) as demo:
-    gr.Markdown("# 🏥 MIE Healthcare Enterprise")
-    
+    gr.Markdown(
+        """
+        # 🏥 Healthcare Document Retrieval Q&A System 
+        ### Ask questions about the functionalities of the Custom Healthcare Management System.
+        """
+    )
     with gr.Row():
         with gr.Column(scale=2):
             chatbot = gr.Chatbot(elem_classes="chatbot-container")

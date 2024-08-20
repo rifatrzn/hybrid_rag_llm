@@ -7,7 +7,7 @@ REPO_URL="https://github.com/mieweb/docs.git"
 DOCS_DIR="./docs"
 
 # Clone or update the repository
-if [ -d "$DOCS_DIR" ]; then
+if [ -d "$DOCS_DIR/.git" ]; then
     echo "Updating existing repository..."
     cd "$DOCS_DIR"
     git pull
