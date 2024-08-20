@@ -16,7 +16,7 @@
 
 ## Project Overview
 
-MIE Healthcare Enterprise is a sophisticated healthcare information system that leverages cutting-edge AI technologies to provide intelligent document management, question answering, and information retrieval capabilities. The system uses a combination of large language models (LLMs) and vector databases to process and analyze healthcare-related documents, offering a user-friendly interface for healthcare professionals to interact with the system.
+Chatbot RAG Compilation is a sophisticated information system that leverages cutting-edge AI technologies to provide intelligent document management, question answering, and information retrieval capabilities. The system uses a combination of large language models (LLMs) and vector databases to process and analyze documents, offering a user-friendly interface for professionals to interact with the system.
 
 ## Features
 
@@ -30,7 +30,7 @@ MIE Healthcare Enterprise is a sophisticated healthcare information system that 
 
 ## Architecture
 
-The MIE Healthcare Enterprise system consists of several interconnected components:
+The Chatbot RAG Compilation system consists of several interconnected components:
 
 1. **FastAPI Backend (`app_server.py`)**: Handles API requests, manages the vector database, and orchestrates the LLM interactions.
 2. **Gradio UI (`gradio_ui.py`)**: Provides a user-friendly web interface for interacting with the system.
@@ -40,7 +40,47 @@ The MIE Healthcare Enterprise system consists of several interconnected componen
 
 ## RAG System Diagram
 ![Chatbot Workflow](./project/Embedding.jpg)
+
+### Chatbot Workflow - Embedding Process data Files
+
+This diagram represents the process of converting Markdown (`.md`) files into vector embeddings, which are used for efficient document retrieval in the system.
+
+#### 1. **Document Loading**
+   - **Description**: The process starts with loading Markdown (`.md`) files from a specified directory using a `DirectoryLoader`. This loader scans the directory and reads all relevant Markdown files.
+   - **Purpose**: To collect all the documents that need to be processed into embeddings, ensuring that the system has access to the latest content from the provided directory.
+
+#### 2. **Content Splitting**
+   - **Description**: Once the Markdown files are loaded, the content within each file is split into smaller chunks. Two main techniques are used here:
+     - **Markdown Header Splitting**: The content is initially split based on the headers (e.g., `#`, `##`, `###`), allowing logical divisions of the document based on its structure.
+     - **Recursive Character Splitting**: After header-based splitting, the content is further divided into smaller chunks using a recursive character text splitter, ensuring that each chunk fits within a defined size (e.g., 500 characters) with some overlap between chunks.
+   - **Purpose**: To break down large documents into manageable pieces that can be efficiently processed, indexed, and searched.
+
+#### 3. **Embedding Generation**
+   - **Description**: Each chunk of text generated from the previous step is passed through an embedding model, specifically the Ollama embedding model. This model converts the textual content into vector embeddings, which are numerical representations of the text's semantic meaning.
+   - **Purpose**: These embeddings allow the system to perform similarity searches by comparing the numerical vectors of different text chunks.
+
+#### 4. **Vector Store Creation**
+   - **Description**: The embeddings created from the text chunks are stored in a vector store using FAISS (Facebook AI Similarity Search). FAISS organizes the embeddings into an index, enabling fast and efficient retrieval of similar content.
+   - **Purpose**: The vector store serves as the system's knowledge base, where all processed documents are stored as embeddings, ready for quick retrieval during search operations.
+
+#### 5. **Saving the Index**
+   - **Description**: The final step involves saving the FAISS index, which contains all the embeddings, to a specified directory. This saved index can be loaded later to perform searches without reprocessing the documents.
+   - **Purpose**: To ensure that the system's knowledge base is persistent, allowing it to be reused across different sessions without having to recreate embeddings from scratch.
+
+
 ![Chatbot Workflow](./project/Mind_llm.jpg)
+
+### 2. **Chatbot Workflow - LLM and Answer Generation**
+
+- **User Query**: Begins with a user submitting a question or query through the Gradio UI.
+- **Query Processing**: FastAPI backend processes the query and selects the appropriate LLM.
+- **LLM Selection**: The system can choose between different LLMs (e.g., Ollama or NVIDIA) based on the requirements.
+- **HYDE Generation**: Generates a hypothetical answer or related context using a template-based approach (HYDE) to narrow down the search within the document database.
+- **Semantic Search**: Uses the hypothetical document or query to perform a semantic search in the FAISS vector store, retrieving the most relevant document chunks.
+- **Answer Generation**: Combines retrieved documents with the original query to generate a final answer using the selected LLM.
+- **Answer Formatting**: Formats the final answer, often including citations or related documents, and returns it to the user through the Gradio UI.
+
+
 
 ```mermaid
 graph TD
@@ -91,9 +131,9 @@ graph TD
 ```
 
 
-## System Diagram
+## System Diagram Tree
 
-Below is a detailed diagram illustrating the architecture and data flow of the MIE Healthcare Enterprise system:
+Below is a detailed diagram illustrating the architecture and data flow tree of the Chatbot RAG Compilation system:
 
 ```mermaid
 graph TD
@@ -275,13 +315,13 @@ For host deployment, consider the following steps:
 
 ## Contributing
 
-We welcome contributions to the MIE Healthcare Enterprise project! Please follow these steps to contribute:
+We welcome contributions to the Chatbot RAG Compilation project! Please follow these steps to contribute:
 
-1. Fork the repository
-2. Create a new branch for your feature or bug fix
-3. Make your changes and commit them with clear, descriptive messages
-4. Push your changes to your fork
-5. Create a pull request with a detailed description of your changes
+Fork the repository
+Create a new branch for your feature or bug fix
+Make your changes and commit them with clear, descriptive messages
+Push your changes to your fork
+Create a pull request with a detailed description of your changes
 
 ## License
 
