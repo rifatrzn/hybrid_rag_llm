@@ -23,3 +23,7 @@ annotated_types
 packaging
 pydantic
 sentence-transformers
+scikit-learn 
+nltk 
+rouge 
+tabulate

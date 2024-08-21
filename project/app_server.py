@@ -2,7 +2,7 @@ import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import List, Dict
+from typing import List, Dict, Optional
 from langchain_community.llms import Ollama
 from langchain_nvidia_ai_endpoints import ChatNVIDIA
 from langchain.prompts import ChatPromptTemplate
@@ -19,6 +19,11 @@ import subprocess
 import json
 from langchain.schema.runnable import RunnableLambda, RunnablePassthrough, RunnableSequence
 from langchain.schema.output_parser import StrOutputParser
+from sklearn.metrics.pairwise import cosine_similarity
+from sentence_transformers import SentenceTransformer
+from langchain.chains import LLMChain
+from langchain.schema.runnable import RunnablePassthrough
+
 
 import torch
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -69,6 +74,9 @@ def get_llm(provider, model):
     else:
         raise ValueError(f"Invalid provider: {provider}")
 
+# Initialize SentenceTransformer model for semantic similarity
+model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
+
 
 # HYDE template and chain setup
 hyde_template = """
@@ -90,7 +98,7 @@ def hyde_retriever(question, provider, model):
     return retriever.get_relevant_documents(hypothetical_document)
 
 template = """
-You are an AI assistant for the MIE Healthcare Enterprise system. Provide a detailed and accurate response based solely on the given context.
+You are an AI assistant for the Healthcare Chatbot Q&A System. Provide a detailed and accurate response based solely on the given context.
 
 Context:
 {context}
@@ -102,17 +110,13 @@ Instructions:
 2. Provide a comprehensive list of features or functionalities, each as a numbered item.
 3. Use bullet points under each item for additional details or explanations.
 4. Only include information present in the given context. Do not speculate or add information not provided.
-5. If the context doesn't provide enough information, clearly state this.
-6. Use 'MIE Healthcare Enterprise' when referring to the system.
-7. Aim for a complete and detailed response within the token limit.
+5. Use 'Healthcare Document Retrieval' when referring to the system.
+6. Aim for a complete and detailed response within the token limit.
 
 Answer:
 """
 
 prompt = ChatPromptTemplate.from_template(template)
-
-from langchain.chains import LLMChain
-from langchain.schema.runnable import RunnablePassthrough
 
 def get_qa_chain(llm, retriever):
     # Define the HYDE chain
@@ -138,15 +142,43 @@ def get_qa_chain(llm, retriever):
 def format_docs(docs):
     return "\n\n".join([
         f"Document {i+1}:\nTitle: {doc.metadata.get('source', 'Unknown')}\n"
-        f"Content: {doc.page_content.replace('{{% system-name %}}', 'MIE Healthcare Enterprise')}"
+        f"Content: {doc.page_content.replace('{{% system-name %}}', 'Healthcare System')}"
         for i, doc in enumerate(docs)
     ])
+
+class DocumentMetadata(BaseModel):
+    source: str
+
+class Document(BaseModel):
+    content: str
+    metadata: DocumentMetadata
+
+class EvaluationMetrics(BaseModel):
+    semantic_similarity: float
+    response_length: int
+
+class GenerateResponse(BaseModel):
+    answer: str
+    documents: List[Document]
+    evaluation: Optional[EvaluationMetrics] = None
 
 class EmbeddingRequest(BaseModel):
     text: str
 
 class EmbeddingResponse(BaseModel):
     embedding: List[float]
+
+class EvaluationRequest(BaseModel):
+    query: str
+    response: str
+    reference: Optional[str] = None
+    provider: str
+    model: str
+
+class EvaluationResponse(BaseModel):
+    semantic_similarity: float
+    response_length: int
+    reference_similarity: Optional[float] = None
 
 class GenerateRequest(BaseModel):
     provider: str
@@ -155,8 +187,13 @@ class GenerateRequest(BaseModel):
     max_tokens: int = 100
     base_url: str = "http://ollama:11434"
     history: List[Dict[str, str]] = []  # To maintain chat-like history
+    
+    
 
-
+# Add this new function to calculate semantic similarity
+def semantic_similarity(text1, text2):
+    embeddings = model.encode([text1, text2])
+    return cosine_similarity([embeddings[0]], [embeddings[1]])[0][0]
 
 
 def call_ollama_api(endpoint: str, payload: dict):
@@ -183,7 +220,6 @@ def call_ollama_api(endpoint: str, payload: dict):
 
 
 
-
 @app.post("/embeddings", response_model=EmbeddingResponse)
 async def get_embeddings(request: EmbeddingRequest):
     try:
@@ -194,7 +230,8 @@ async def get_embeddings(request: EmbeddingRequest):
         logger.error(f"Error in get_embeddings: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/generate")
+
+@app.post("/generate", response_model=GenerateResponse)
 async def generate(request: GenerateRequest):
     try:
         llm = get_llm(request.provider, request.model)
@@ -216,8 +253,8 @@ async def generate(request: GenerateRequest):
 
         retrieved_docs = result.get('docs', [])
 
-        answer = answer.replace('{{% system-name %}}', 'MIE Healthcare Enterprise')
-        
+        answer = answer.replace('{{% system-name %}}', 'Healthcare System')
+                
         # Concise resource formatting
         resources = [doc.metadata.get('source', '').split('/')[-1].split('.')[0] for doc in retrieved_docs if doc.metadata.get('source')]
         formatted_resources = "📚 Related documents: " + ", ".join(resources)
@@ -228,15 +265,30 @@ async def generate(request: GenerateRequest):
 
         answer = f"{answer}\n\n{formatted_resources}"
 
-        return {
-            "answer": answer,
-            "documents": [
-                {"content": doc.page_content[:150], "metadata": doc.metadata}
+        # Calculate evaluation metrics
+        similarity = semantic_similarity(request.prompt, answer)
+        response_length = len(answer.split())
+
+        response = GenerateResponse(
+            answer=answer,
+            documents=[
+                Document(
+                    content=doc.page_content[:150],
+                    metadata=DocumentMetadata(source=str(doc.metadata.get('source', '')))
+                )
                 for doc in retrieved_docs[:3]
             ],
-            "history": request.history + [{"role": "user", "content": request.prompt}, {"role": "assistant", "content": answer}]
-        }
+            evaluation=EvaluationMetrics(
+                semantic_similarity=similarity,
+                response_length=response_length
+            )
+        )
 
+        # Log the full response for debugging
+        logger.info(f"Full response: {response.dict()}")
+
+        return response
+    
     except Exception as e:
         logger.error(f"Error in generate: {str(e)}", exc_info=True)
         error_message = str(e)
@@ -245,8 +297,8 @@ async def generate(request: GenerateRequest):
         elif "Unauthorized" in error_message:
             error_message = "NVIDIA API authentication failed. Please check your API key."
         raise HTTPException(status_code=500, detail=error_message)
-               
-
+    
+    
 # Memory class to keep track of important facts and points during the conversation
 class ConversationMemory:
     def __init__(self, max_memory_size=5):
@@ -284,9 +336,51 @@ async def update_vector_db():
         logger.error(f"Unexpected error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
 
+
+# Initialize SentenceTransformer model for semantic similarity
+model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
+
+
+
+# Add this new evaluation endpoint
+@app.post("/evaluate", response_model=EvaluationResponse)
+async def evaluate_response(request: EvaluationRequest):
+    try:
+        evaluation = EvaluationResponse(
+            semantic_similarity=semantic_similarity(request.query, request.response),
+            response_length=len(request.response.split())
+        )
+        
+        if request.reference:
+            evaluation.reference_similarity = semantic_similarity(request.response, request.reference)
+        
+        return evaluation
+    except Exception as e:
+        logger.error(f"Error in evaluate_response: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Add this new endpoint to compare both LLMs
+@app.post("/compare_llms")
+async def compare_llms(request: GenerateRequest):
+    try:
+        results = {}
+        for provider in ["ollama", "nvidia"]:
+            req = GenerateRequest(
+                provider=provider,
+                model=request.model if provider == "ollama" else "meta/llama-3.1-70b-instruct",
+                prompt=request.prompt,
+                max_tokens=request.max_tokens
+            )
+            results[provider] = await generate(req)
+        return results
+    except Exception as e:
+        logger.error(f"Error in compare_llms: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/")
 async def root():
-    return {"message": "Welcome to the MIE Healthcare System API"}
+    return {"message": "Welcome to the Chatbot of Healthcare Q&A System"}
 
 @app.get("/health")
 async def health_check():

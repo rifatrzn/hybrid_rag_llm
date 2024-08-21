@@ -36,15 +36,29 @@ def chat_with_model(message, history, provider, model, max_tokens):
     result = api_request("generate", payload)
     
     if result and "answer" in result:
-        answer = result['answer']  # The answer now includes the "🤖 " prefix from the backend
+        answer = result['answer']
         
-        # The related documents are now included in the answer, so we don't need to add them separately
+        # Add evaluation metrics if available
+        if "evaluation" in result:
+            eval_metrics = result["evaluation"]
+            answer += f"\n\n📊 Evaluation Metrics:"
+            answer += f"\n   • Semantic Similarity: {eval_metrics['semantic_similarity']:.4f}"
+            answer += f"\n   • Response Length: {eval_metrics['response_length']}"
+        
+        # Add related documents if available
+        if "documents" in result:
+            answer += "\n\n📚 Related Documents:"
+            for doc in result["documents"]:
+                source = doc['metadata']['source'].split('/')[-1] if 'source' in doc['metadata'] else "Unknown"
+                answer += f"\n   • {source}: {doc['content'][:100]}..."
+        
         return answer
     elif result and "error" in result:
         return f"❌ Error: {result['error']}"
     else:
         return "❓ An unexpected error occurred."
-
+    
+    
 css = """
 .chatbot-container {
     border-radius: 10px;
@@ -62,6 +76,10 @@ css = """
 .chatbot-container .bot-message {
     background-color: #fff;
     border: 1px solid #e0e0e0;
+}
+.chatbot-container .bot-message pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
 }
 """
 
