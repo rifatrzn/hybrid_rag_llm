@@ -47,7 +47,7 @@ def chat_with_model(message, history, provider, model, max_tokens):
         
         # Add related documents if available
         if "documents" in result:
-            answer += "\n\n📚 Related Documents:"
+            answer += "\n\n📚 Original Source:"
             for doc in result["documents"]:
                 source = doc['metadata']['source'].split('/')[-1] if 'source' in doc['metadata'] else "Unknown"
                 answer += f"\n   • {source}: {doc['content'][:100]}..."

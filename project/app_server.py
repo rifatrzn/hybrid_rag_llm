@@ -80,14 +80,17 @@ model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
 
 # HYDE template and chain setup
 hyde_template = """
-Even if you do not know the full answer, generate a detailed and organic paragraph as a hypothetical response to the following question. Include relevant details and plausible scenarios that align with common functionalities in document management systems:
+Generate a detailed, realistic, and contextually appropriate hypothetical response to the following question as it would be handled in a sophisticated healthcare document management system.
 
 {question}
 
 Example:
 Q: How does the document management system handle user authentication?
-A: The system uses a multi-layered approach to authentication, incorporating both password and biometric verification to ensure robust security. Users must first enter a secure password, followed by biometric verification such as a fingerprint or facial recognition. This dual-factor authentication helps protect sensitive data and prevents unauthorized access.
+A: In a healthcare document management system, user authentication is typically handled through a multi-layered approach that includes secure passwords, biometric verification, and two-factor authentication (2FA). This ensures that only authorized users can access sensitive medical records, reducing the risk of data breaches.
+
+Make sure to include plausible system functionalities, industry-standard practices, and relevant details.
 """
+
 hyde_prompt = ChatPromptTemplate.from_template(hyde_template)
 def get_hyde_query_transformer(provider, model):
     return hyde_prompt | get_llm(provider, model) | StrOutputParser()
@@ -106,15 +109,17 @@ Context:
 Question: {question}
 
 Instructions:
-1. Start your response with "🤖 " followed by a concise introduction to the topic.
-2. Provide a comprehensive list of features or functionalities, each as a numbered item.
+1. Start your response with "🤖 " followed by a concise introduction that summarizes the purpose or key aspect of the topic.
+2. Provide a comprehensive list of features or functionalities, each as a detailed item.
 3. Use bullet points under each item for additional details or explanations.
-4. Only include information present in the given context. Do not speculate or add information not provided.
-5. Use 'Healthcare Document Retrieval' when referring to the system.
-6. Aim for a complete and detailed response within the token limit.
+4. Only include information present in the given context. Avoid speculating or adding information not provided.
+5. Refer to the system as 'Healthcare Document Retrieval' where appropriate.
+6. Ensure the response maintains continuity and connection with any previous answers, linking them where applicable.
+7. Aim for a complete, detailed, and contextually accurate response within the token limit.
 
 Answer:
 """
+
 
 prompt = ChatPromptTemplate.from_template(template)
 
@@ -273,8 +278,8 @@ async def generate(request: GenerateRequest):
             answer=answer,
             documents=[
                 Document(
-                    content=doc.page_content[:150],
-                    metadata=DocumentMetadata(source=str(doc.metadata.get('source', '')))
+                    content=doc.page_content[:100],
+                    source="/".join(doc.metadata.get('source', '').split('/')[-4:])  # Retrieve the last four segments of the path
                 )
                 for doc in retrieved_docs[:3]
             ],
